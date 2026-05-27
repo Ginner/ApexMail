@@ -2,7 +2,9 @@
 
 ## Secret Values
 
-ApexMail does not provide or require a secrets backend. If you use `config.sops.placeholder` or `config.sops.secrets` in your account values, import and configure `sops-nix` in the consuming Home Manager configuration and set `apexMail.renderBackend = "sops"`.
+ApexMail does not provide or require a secrets backend. If you use sops, import and configure `sops-nix` in the consuming Home Manager configuration and set `apexMail.renderBackend = "sops"`.
+
+With the sops backend, pass sops key names for `address`, `realname`, and `extraNeomuttConfig`, not `config.sops.placeholder.*` values. Direct placeholders in account options can recurse because `sops.placeholder` depends on `sops.templates`, and the sops backend generates those templates.
 
 ## Missing Account Settings
 

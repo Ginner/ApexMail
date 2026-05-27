@@ -78,19 +78,18 @@ If the consuming repo uses sops-nix, keep all sops setup there:
 
 ## Private NeoMutt Snippets
 
-Named mailboxes and case-specific macros should stay in the consuming private or host-specific repository. If those snippets are stored in sops, declare the secret outside ApexMail and pass the placeholder as account config:
+Named mailboxes and case-specific macros should stay in the consuming private or host-specific repository. If those snippets are stored in sops, declare the secret outside ApexMail and pass the key name as account config:
 
 ```nix
 { config, ... }:
 {
   sops.secrets."work-neomutt-extra-config" = { };
 
-  apexMail.accounts.work.extraNeomuttConfig =
-    config.sops.placeholder."work-neomutt-extra-config";
+  apexMail.accounts.work.extraNeomuttConfig = "work-neomutt-extra-config";
 }
 ```
 
-ApexMail treats `extraNeomuttConfig` as opaque NeoMutt text. It does not assume whether the value is public text, a sops placeholder, or omitted.
+ApexMail treats `extraNeomuttConfig` as opaque NeoMutt text for the XDG backend and as a sops key name for the sops backend.
 
 When using the sops backend, set `apexMail.renderBackend = "sops"` and pass sops key names for `address`, `realname`, and `extraNeomuttConfig`. ApexMail will render generated files through `sops.templates`, but it still does not declare or configure any secrets itself.
 
