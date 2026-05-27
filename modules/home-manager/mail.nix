@@ -168,6 +168,8 @@ let
     set abort_key = "<Esc>"
     set mail_check_stats
     set mailcap_path = "${config.xdg.configHome}/neomutt/mailcap"
+    auto_view text/html
+    alternative_order text/plain text/html
 
     set sidebar_visible = yes
     set sidebar_short_path = yes
