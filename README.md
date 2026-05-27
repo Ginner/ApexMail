@@ -106,6 +106,10 @@ apexMail.notmuch.enable
 apexMail.neomutt.enable
 apexMail.neomutt.mailsyncCommand
 apexMail.neomutt.enableKhard
+apexMail.neomutt.theme.enable
+apexMail.neomutt.theme.useStylix
+apexMail.neomutt.theme.colors
+apexMail.neomutt.theme.extraConfig
 apexMail.accounts.<name>
 ```
 
@@ -125,6 +129,40 @@ Supported folder presets:
 ```
 
 For `custom`, provide explicit IMAP, SMTP, and folder settings on the account.
+
+## NeoMutt Theming
+
+ApexMail generates a mutt-wizard-like NeoMutt color theme by default:
+
+```nix
+apexMail.neomutt.theme.enable = true;
+```
+
+When `apexMail.neomutt.theme.useStylix = true`, ApexMail uses terminal ANSI color tokens (`color0` through `color15`) so the theme follows the terminal palette configured by Stylix. It does not emit direct `#rrggbb` colors because many NeoMutt builds, including the nixpkgs build, reject those unless direct color support is enabled.
+
+If Stylix is not used, the generated theme falls back to named terminal colors such as `red`, `green`, `blue`, and `brightyellow`.
+
+You can append or override NeoMutt color rules with:
+
+```nix
+apexMail.neomutt.theme.extraConfig = ''
+  color status brightgreen default
+'';
+```
+
+For a fully explicit palette, provide NeoMutt-supported color tokens keyed by `base00` through `base0F`:
+
+```nix
+apexMail.neomutt.theme.colors = {
+  base00 = "color0";
+  base05 = "color7";
+  base08 = "color1";
+  base0B = "color2";
+  base0D = "color4";
+};
+```
+
+Do not use `#rrggbb` values in `apexMail.neomutt.theme.colors` unless your NeoMutt build supports direct colors.
 
 ## Generated Files
 
