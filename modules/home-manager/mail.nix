@@ -143,6 +143,7 @@ let
     set sort = reverse-last-date
     set sort_aux = reverse-last-date
     set sort_re
+    set wait_key = no
     set use_threads = threads
     set uncollapse_jump
     set charset = "utf-8"
@@ -227,7 +228,7 @@ let
     macro index,pager \Cj '<sidebar-next><sidebar-open>'
     macro index,pager \Ck '<sidebar-prev><sidebar-open>'
     macro index,pager U '<enter-command>set pipe_decode = yes<enter><pipe-message>urlscan<enter><enter-command>set pipe_decode = no<enter>' "view URLs"
-    macro attach s "<save-entry><bol>$HOME/Downloads/<eol>" "Save to Downloads folder"
+    macro attach s "<save-entry><bol>${config.xdg.userDirs.download}/<eol>" "Save to Downloads folder"
     macro browser h '<change-dir><kill-line>..<enter>' "Go to parent folder"
     macro index O "<shell-escape>${cfg.neomutt.mailsyncCommand}<enter>" "run mailsync to sync all mail"
     macro index \Cf "<enter-command>unset wait_key<enter><shell-escape>printf 'Enter a search term to find with notmuch: '; read x; echo \$x >\"\''${XDG_CACHE_HOME:-\$HOME/.cache}/mutt_terms\"<enter><limit>~i \"\`notmuch search --output=messages \$(cat \"\''${XDG_CACHE_HOME:-\$HOME/.cache}/mutt_terms\") | head -n 600 | perl -le '@a=<>;s/\^id:// for@a;$,=\"|\";print@a' | perl -le '@a=<>; chomp@a; s/\\+/\\\\+/g for@a; s/\$/\\\\\$/g for@a;print@a' \`\"<enter>" "show only messages matching a notmuch pattern"
