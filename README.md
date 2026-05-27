@@ -43,7 +43,7 @@ Configure accounts in the host or user-specific repository:
 }
 ```
 
-ApexMail does not depend on any secrets module. `address`, `realname`, `passwordCommand`, and `extraNeomuttConfig` are plain inputs supplied by the consuming configuration. Those values may be clear text, generated values, sops placeholders, agenix paths, `pass` commands, or anything else the host repo chooses.
+ApexMail does not depend on any secrets module. `address`, `realname`, `passwordCommand`, `signatureFile`, and `extraNeomuttConfig` are plain inputs supplied by the consuming configuration. Those values may be clear text, generated values, sops placeholders, agenix paths, `pass` commands, or anything else the host repo chooses.
 
 Do not put the password itself in `passwordCommand`. Use a command that prints the password at runtime.
 
@@ -95,16 +95,16 @@ When using the sops backend, set `apexMail.renderBackend = "sops"` and pass sops
 
 ## Signatures
 
-Signatures often contain personal data, so keep both the signature file and the NeoMutt signature config in the consuming host repository. ApexMail disables signatures by default; override that per account through `extraNeomuttConfig`:
+Signatures often contain personal data, so keep the signature file content in the consuming host repository. ApexMail disables signatures by default; point an account at a consuming-repo-managed signature file with `signatureFile`:
 
 ```nix
-apexMail.accounts.work.extraNeomuttConfig = ''
-  set signature = "~/.config/mail/signature-work"
-  set sig_on_top = yes
-'';
+apexMail.accounts.work = {
+  signatureFile = "${config.xdg.configHome}/neomutt/signature-work";
+  signatureOnTop = false;
+};
 ```
 
-For the sops backend, store those NeoMutt lines in the private sops value referenced by `extraNeomuttConfig`.
+For the sops backend, render the signature file from the consuming repo with `sops.templates`, then pass that generated path to `signatureFile`. Keep `extraNeomuttConfig` for opaque private NeoMutt snippets such as named mailboxes and account-specific macros.
 
 ## Options
 
@@ -124,6 +124,8 @@ apexMail.neomutt.theme.useStylix
 apexMail.neomutt.theme.colors
 apexMail.neomutt.theme.extraConfig
 apexMail.accounts.<name>
+apexMail.accounts.<name>.signatureFile
+apexMail.accounts.<name>.signatureOnTop
 ```
 
 Supported provider presets:

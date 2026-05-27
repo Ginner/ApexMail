@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   cfg = config.apexMail;
@@ -244,7 +249,10 @@ let
     ${optionalConfig cfg.neomutt.theme.extraConfig}
 
     ${lib.concatStringsSep "\n" (
-      map (a: ''macro index,pager i${a.macroKey} '<sync-mailbox><enter-command>source ${config.xdg.configHome}/neomutt/${a.name}<enter><change-folder>!<enter>;<check-stats>' "switch to ${a.name}"'') accountList
+      map (
+        a:
+        ''macro index,pager i${a.macroKey} '<sync-mailbox><enter-command>source ${config.xdg.configHome}/neomutt/${a.name}<enter><change-folder>!<enter>;<check-stats>' "switch to ${a.name}"''
+      ) accountList
     )}
 
     ${lib.optionalString (primaryAccount != null) ''
@@ -269,13 +277,20 @@ let
         };
 
         provider = lib.mkOption {
-          type = lib.types.enum [ "startmail" "custom" ];
+          type = lib.types.enum [
+            "startmail"
+            "custom"
+          ];
           default = "custom";
           description = "Provider preset to use for IMAP and SMTP settings.";
         };
 
         folderPreset = lib.mkOption {
-          type = lib.types.enum [ "startmail" "generic" "custom" ];
+          type = lib.types.enum [
+            "startmail"
+            "generic"
+            "custom"
+          ];
           default = "custom";
           description = "Folder preset to use for mail folder names.";
         };
@@ -343,6 +358,21 @@ let
           description = "Spam/junk folder name. Required when folderPreset is custom.";
         };
 
+        signatureFile = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = ''
+            Path to this account's NeoMutt signature file. Set to null to
+            disable signatures for the account.
+          '';
+        };
+
+        signatureOnTop = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Whether NeoMutt should insert the signature before quoted text.";
+        };
+
         macroKey = lib.mkOption {
           type = lib.types.str;
           description = ''
@@ -397,7 +427,10 @@ in
     };
 
     renderBackend = lib.mkOption {
-      type = lib.types.enum [ "xdg" "sops" ];
+      type = lib.types.enum [
+        "xdg"
+        "sops"
+      ];
       default = "xdg";
       description = ''
         Backend used to render generated config files. Use "sops" when account
@@ -479,8 +512,10 @@ in
       let
         primaryAccounts = lib.filter (a: a.primary) accountList;
         macroKeys = map (a: a.macroKey) accountList;
-        hasProviderConfig = a: a.imapHost != null && a.imapPort != null && a.smtpHost != null && a.smtpPort != null;
-        hasFolderConfig = a:
+        hasProviderConfig =
+          a: a.imapHost != null && a.imapPort != null && a.smtpHost != null && a.smtpPort != null;
+        hasFolderConfig =
+          a:
           a.archiveFolder != null
           && a.draftsFolder != null
           && a.sentFolder != null
@@ -510,17 +545,21 @@ in
         message = "apexMail.accounts.${a.name}: folder settings are incomplete.";
       }) accountList;
 
-    home.packages = lib.optionals cfg.mbsync.enable [ pkgs.isync ]
+    home.packages =
+      lib.optionals cfg.mbsync.enable [ pkgs.isync ]
       ++ lib.optionals cfg.msmtp.enable [ pkgs.msmtp ]
       ++ lib.optionals cfg.notmuch.enable [ pkgs.notmuch ]
-      ++ lib.optionals cfg.neomutt.enable (with pkgs; [
-        neomutt
-        gnupg
-        lynx
-        urlscan
-        w3m
-        xdg-utils
-      ]);
+      ++ lib.optionals cfg.neomutt.enable (
+        with pkgs;
+        [
+          neomutt
+          gnupg
+          lynx
+          urlscan
+          w3m
+          xdg-utils
+        ]
+      );
 
     xdg.configFile = lib.mkMerge [
       (lib.mkIf (cfg.renderBackend == "xdg" && cfg.mbsync.enable) {
@@ -534,16 +573,16 @@ in
       (lib.mkIf cfg.neomutt.enable (
         {
           "neomutt/mailcap".text = ''
-        text/plain; ${pkgs.coreutils}/bin/cat %s; copiousoutput
-        text/*; ${pkgs.coreutils}/bin/cat %s; copiousoutput
-        text/html; ${pkgs.lynx}/bin/lynx -dump -width=120 -stdin; nametemplate=%s.html; copiousoutput
-        text/html; ${pkgs.w3m}/bin/w3m -dump -cols 120 -T text/html -I %{charset} -O utf-8; copiousoutput
-        application/pdf; ${pkgs.xdg-utils}/bin/xdg-open %s
-        image/*; ${pkgs.xdg-utils}/bin/xdg-open %s
-        audio/*; ${pkgs.xdg-utils}/bin/xdg-open %s
-        video/*; ${pkgs.xdg-utils}/bin/xdg-open %s
-        application/*; ${pkgs.xdg-utils}/bin/xdg-open %s
-      '';
+            text/plain; ${pkgs.coreutils}/bin/cat %s; copiousoutput
+            text/*; ${pkgs.coreutils}/bin/cat %s; copiousoutput
+            text/html; ${pkgs.lynx}/bin/lynx -dump -width=120 -stdin; nametemplate=%s.html; copiousoutput
+            text/html; ${pkgs.w3m}/bin/w3m -dump -cols 120 -T text/html -I %{charset} -O utf-8; copiousoutput
+            application/pdf; ${pkgs.xdg-utils}/bin/xdg-open %s
+            image/*; ${pkgs.xdg-utils}/bin/xdg-open %s
+            audio/*; ${pkgs.xdg-utils}/bin/xdg-open %s
+            video/*; ${pkgs.xdg-utils}/bin/xdg-open %s
+            application/*; ${pkgs.xdg-utils}/bin/xdg-open %s
+          '';
 
           "neomutt/neomuttrc".text = mkNeomuttrc;
         }

@@ -1,10 +1,15 @@
-{ config, lib, presets }:
+{
+  config,
+  lib,
+  presets,
+}:
 
 let
   optionalConfig = value: lib.optionalString (value != null && value != "") value;
   concatStanzas = f: xs: lib.concatStringsSep "\n" (map f xs);
 
-  resolveAccount = a:
+  resolveAccount =
+    a:
     let
       base = {
         imapHost = null;
@@ -16,12 +21,19 @@ let
         sentFolder = null;
         trashFolder = null;
         spamFolder = null;
+        signatureFile = null;
       };
       providerDefaults = presets.providers.${a.provider} or { };
       folderDefaults = presets.folders.${a.folderPreset} or { };
       explicitValues = lib.filterAttrs (_: value: value != null) a;
     in
-    base // providerDefaults // folderDefaults // explicitValues // { extraNeomuttConfig = a.extraNeomuttConfig; };
+    base
+    // providerDefaults
+    // folderDefaults
+    // explicitValues
+    // {
+      extraNeomuttConfig = a.extraNeomuttConfig;
+    };
 
   mkIsyncStores = value: a: ''
     IMAPStore ${a.name}-remote
@@ -102,7 +114,15 @@ let
     macro index,pager Ma ";<save-message>=${a.archiveFolder}<enter>" "move mail to archive"
     macro index,pager Ca ";<copy-message>=${a.archiveFolder}<enter>" "copy mail to archive"
 
-    unset signature
+    ${
+      if a.signatureFile != null then
+        ''
+          set signature='${a.signatureFile}'
+          set sig_on_top=${if a.signatureOnTop then "yes" else "no"}
+        ''
+      else
+        "unset signature"
+    }
 
     set nm_default_uri = "notmuch://${config.xdg.dataHome}/mail"
     virtual-mailboxes "My INBOX" "notmuch://?query=tag%3Ainbox"
@@ -132,7 +152,8 @@ in
 {
   inherit resolveAccount mkNeomuttAccountFile mkNotmuchConfig;
 
-  mkAccountList = accounts:
+  mkAccountList =
+    accounts:
     let
       resolved = map resolveAccount accounts;
       primary = lib.filter (a: a.primary) resolved;
@@ -140,9 +161,14 @@ in
     in
     primary ++ (lib.sortOn (a: a.name) others);
 
-  mkIsyncrcContent = value: accountList:
-    (concatStanzas (mkIsyncStores value) accountList) + "\n" + (concatStanzas mkIsyncChannel accountList);
+  mkIsyncrcContent =
+    value: accountList:
+    (concatStanzas (mkIsyncStores value) accountList)
+    + "\n"
+    + (concatStanzas mkIsyncChannel accountList);
 
-  mkMsmtpConfigContent = value: accountList: primaryAccount:
-    (lib.concatMapStrings (mkMsmtpStanza value) accountList) + "\naccount default : ${primaryAccount.name}\n";
+  mkMsmtpConfigContent =
+    value: accountList: primaryAccount:
+    (lib.concatMapStrings (mkMsmtpStanza value) accountList)
+    + "\naccount default : ${primaryAccount.name}\n";
 }
