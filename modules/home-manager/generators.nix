@@ -72,7 +72,6 @@ let
     set crypt_opportunistic_encrypt = no
     set pgp_use_gpg_agent = yes
     set mbox_type = Maildir
-    set sort = "threads"
 
     set sendmail='msmtpq --read-envelope-from --read-recipients'
 
