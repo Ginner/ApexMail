@@ -518,6 +518,7 @@ in
         lynx
         urlscan
         w3m
+        xdg-utils
       ]);
 
     xdg.configFile = lib.mkMerge [
@@ -532,8 +533,15 @@ in
       (lib.mkIf cfg.neomutt.enable (
         {
           "neomutt/mailcap".text = ''
+        text/plain; ${pkgs.coreutils}/bin/cat %s; copiousoutput
+        text/*; ${pkgs.coreutils}/bin/cat %s; copiousoutput
         text/html; ${pkgs.lynx}/bin/lynx -dump -width=120 -stdin; nametemplate=%s.html; copiousoutput
         text/html; ${pkgs.w3m}/bin/w3m -dump -cols 120 -T text/html -I %{charset} -O utf-8; copiousoutput
+        application/pdf; ${pkgs.xdg-utils}/bin/xdg-open %s
+        image/*; ${pkgs.xdg-utils}/bin/xdg-open %s
+        audio/*; ${pkgs.xdg-utils}/bin/xdg-open %s
+        video/*; ${pkgs.xdg-utils}/bin/xdg-open %s
+        application/*; ${pkgs.xdg-utils}/bin/xdg-open %s
       '';
 
           "neomutt/neomuttrc".text = mkNeomuttrc;
