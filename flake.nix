@@ -19,6 +19,7 @@
     in
     {
       homeManagerModules.default = ./modules/home-manager;
+      homeManagerModules.sops = ./modules/home-manager/sops.nix;
 
       checks.${system}.example = (home-manager.lib.homeManagerConfiguration {
         inherit pkgs;

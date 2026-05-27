@@ -25,6 +25,7 @@
 
   apexMail = {
     enable = true;
+    renderBackend = "sops";
 
     accounts.work = {
       primary = true;

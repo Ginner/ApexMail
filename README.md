@@ -27,6 +27,7 @@ Configure accounts in the host or user-specific repository:
 {
   apexMail = {
     enable = true;
+    renderBackend = "sops";
 
     accounts.work = {
       primary = true;
@@ -91,12 +92,15 @@ Named mailboxes and case-specific macros should stay in the consuming private or
 
 ApexMail treats `extraNeomuttConfig` as opaque NeoMutt text. It does not assume whether the value is public text, a sops placeholder, or omitted.
 
+When using sops placeholders, set `apexMail.renderBackend = "sops"`. ApexMail will render generated files through `sops.templates`, but it still does not declare or configure any secrets itself.
+
 ## Options
 
 Top-level namespace:
 
 ```nix
 apexMail.enable
+apexMail.renderBackend
 apexMail.mbsync.enable
 apexMail.msmtp.enable
 apexMail.notmuch.enable

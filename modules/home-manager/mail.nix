@@ -43,6 +43,27 @@ let
   concatStanzas = f: xs: lib.concatStringsSep "\n" (map f xs);
   optionalConfig = value: lib.optionalString (value != null && value != "") value;
 
+  isyncrcContent = (concatStanzas mkIsyncStores accountList) + "\n" + (concatStanzas mkIsyncChannel accountList);
+  msmtpConfigContent = (lib.concatMapStrings mkMsmtpStanza accountList) + "\naccount default : ${primaryAccount.name}\n";
+  notmuchConfigContent = ''
+    [database]
+    path=${config.xdg.dataHome}/mail
+
+    [user]
+    name=${primaryAccount.realname}
+    primary_email=${primaryAccount.address}
+
+    [new]
+    tags=unread;inbox;
+    ignore=.mbsyncstate;.uidvalidity;
+
+    [search]
+    exclude_tags=deleted;spam;
+
+    [maildir]
+    synchronize_flags=true
+  '';
+
   mkIsyncStores = a: ''
     IMAPStore ${a.name}-remote
     Host ${a.imapHost}
@@ -360,6 +381,15 @@ in
       description = "Generate mbsync configuration and install isync.";
     };
 
+    renderBackend = lib.mkOption {
+      type = lib.types.enum [ "xdg" "sops" ];
+      default = "xdg";
+      description = ''
+        Backend used to render generated config files. Use "sops" when account
+        values contain sops placeholders that must be substituted at activation.
+      '';
+    };
+
     msmtp.enable = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -447,12 +477,12 @@ in
       ]);
 
     xdg.configFile = lib.mkMerge [
-      (lib.mkIf cfg.mbsync.enable {
-        "isyncrc".text = (concatStanzas mkIsyncStores accountList) + "\n" + (concatStanzas mkIsyncChannel accountList);
+      (lib.mkIf (cfg.renderBackend == "xdg" && cfg.mbsync.enable) {
+        "isyncrc".text = isyncrcContent;
       })
 
-      (lib.mkIf (cfg.msmtp.enable && primaryAccount != null) {
-        "msmtp/config".text = (lib.concatMapStrings mkMsmtpStanza accountList) + "\naccount default : ${primaryAccount.name}\n";
+      (lib.mkIf (cfg.renderBackend == "xdg" && cfg.msmtp.enable && primaryAccount != null) {
+        "msmtp/config".text = msmtpConfigContent;
       })
 
       (lib.mkIf cfg.neomutt.enable (
@@ -467,30 +497,15 @@ in
         // lib.listToAttrs (
           map (a: {
             name = "neomutt/${a.name}";
-            value.text = mkNeomuttAccountFile a;
+            value = lib.mkIf (cfg.renderBackend == "xdg") {
+              text = mkNeomuttAccountFile a;
+            };
           }) accountList
         )
       ))
 
-      (lib.mkIf (cfg.notmuch.enable && primaryAccount != null) {
-        "notmuch/default/config".text = ''
-          [database]
-          path=${config.xdg.dataHome}/mail
-
-          [user]
-          name=${primaryAccount.realname}
-          primary_email=${primaryAccount.address}
-
-          [new]
-          tags=unread;inbox;
-          ignore=.mbsyncstate;.uidvalidity;
-
-          [search]
-          exclude_tags=deleted;spam;
-
-          [maildir]
-          synchronize_flags=true
-        '';
+      (lib.mkIf (cfg.renderBackend == "xdg" && cfg.notmuch.enable && primaryAccount != null) {
+        "notmuch/default/config".text = notmuchConfigContent;
       })
     ];
   };
