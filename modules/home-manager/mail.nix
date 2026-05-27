@@ -146,7 +146,7 @@ let
     color header ${c.base0D} ${c.base00} ".*"
     color body ${c.base08} ${c.base00} "[-.+_a-zA-Z0-9]+@[-.a-zA-Z0-9]+"
     color body ${c.base0D} ${c.base00} "(https?|ftp)://[-.,/%~_:?&=#a-zA-Z0-9]+"
-    color body ${c.base0B} ${c.base00} "`[^`]*`"
+    color body ${c.base0B} ${c.base00} "\`[^\`]*\`"
     color body ${c.base0D} ${c.base00} "^# .*"
     color body ${c.base0C} ${c.base00} "^## .*"
     color body ${c.base0B} ${c.base00} "^### .*"
