@@ -43,6 +43,108 @@ let
   concatStanzas = f: xs: lib.concatStringsSep "\n" (map f xs);
   optionalConfig = value: lib.optionalString (value != null && value != "") value;
 
+  hasStylixColors =
+    config ? lib
+    && config.lib ? stylix
+    && config.lib.stylix ? colors
+    && config.lib.stylix.colors ? withHashtag;
+
+  fallbackColors = {
+    base00 = "default";
+    base01 = "black";
+    base02 = "blue";
+    base03 = "brightblack";
+    base04 = "white";
+    base05 = "default";
+    base06 = "brightwhite";
+    base07 = "brightwhite";
+    base08 = "red";
+    base09 = "yellow";
+    base0A = "brightyellow";
+    base0B = "green";
+    base0C = "cyan";
+    base0D = "blue";
+    base0E = "magenta";
+    base0F = "red";
+  };
+
+  themeColors =
+    if cfg.neomutt.theme.colors != null then
+      fallbackColors // cfg.neomutt.theme.colors
+    else if cfg.neomutt.theme.useStylix && hasStylixColors then
+      fallbackColors // config.lib.stylix.colors.withHashtag
+    else
+      fallbackColors;
+
+  mkNeomuttTheme = c: ''
+    # Theme
+    mono bold bold
+    mono underline underline
+    mono indicator reverse
+    mono error bold
+
+    color normal ${c.base05} ${c.base00}
+    color indicator ${c.base00} ${c.base0D}
+    color status ${c.base0A} ${c.base00}
+    color error ${c.base08} ${c.base00}
+    color tilde ${c.base03} ${c.base00}
+    color message ${c.base0C} ${c.base00}
+    color markers ${c.base08} ${c.base00}
+    color attachment ${c.base06} ${c.base00}
+    color search ${c.base0E} ${c.base00}
+    color hdrdefault ${c.base0B} ${c.base00}
+    color quoted ${c.base0B} ${c.base00}
+    color quoted1 ${c.base0D} ${c.base00}
+    color quoted2 ${c.base0C} ${c.base00}
+    color quoted3 ${c.base0A} ${c.base00}
+    color quoted4 ${c.base08} ${c.base00}
+    color quoted5 ${c.base0F} ${c.base00}
+    color signature ${c.base0B} ${c.base00}
+    color bold ${c.base07} ${c.base00}
+    color underline ${c.base0D} ${c.base00}
+
+    color sidebar_highlight ${c.base0D} ${c.base00}
+    color sidebar_divider ${c.base03} ${c.base00}
+    color sidebar_flagged ${c.base0A} ${c.base00}
+    color sidebar_new ${c.base0B} ${c.base00}
+
+    color index ${c.base05} ${c.base00} '.*'
+    color index_author ${c.base08} ${c.base00} '.*'
+    color index_number ${c.base0D} ${c.base00}
+    color index_subject ${c.base0C} ${c.base00} '.*'
+
+    color index ${c.base0A} ${c.base00} "~N"
+    color index_author ${c.base08} ${c.base00} "~N"
+    color index_subject ${c.base0C} ${c.base00} "~N"
+
+    color index ${c.base05} ${c.base02} "~T"
+    color index_author ${c.base08} ${c.base02} "~T"
+    color index_subject ${c.base0C} ${c.base02} "~T"
+
+    color index ${c.base0B} ${c.base00} "~F"
+    color index_subject ${c.base0B} ${c.base00} "~F"
+    color index_author ${c.base0B} ${c.base00} "~F"
+
+    color header ${c.base0E} ${c.base00} "^From"
+    color header ${c.base0C} ${c.base00} "^Subject"
+    color header ${c.base06} ${c.base00} "^(CC|BCC)"
+    color header ${c.base0D} ${c.base00} ".*"
+    color body ${c.base08} ${c.base00} "[-.+_a-zA-Z0-9]+@[-.a-zA-Z0-9]+"
+    color body ${c.base0D} ${c.base00} "(https?|ftp)://[-.,/%~_:?&=#a-zA-Z0-9]+"
+    color body ${c.base0B} ${c.base00} "`[^`]*`"
+    color body ${c.base0D} ${c.base00} "^# .*"
+    color body ${c.base0C} ${c.base00} "^## .*"
+    color body ${c.base0B} ${c.base00} "^### .*"
+    color body ${c.base0A} ${c.base00} "^(\t| )*(-|\\*) .*"
+    color body ${c.base08} ${c.base00} "(BAD signature)"
+    color body ${c.base0C} ${c.base00} "(Good signature)"
+    color body ${c.base03} ${c.base00} "^gpg: Good signature .*"
+    color body ${c.base0A} ${c.base00} "^gpg: "
+    color body ${c.base0A} ${c.base08} "^gpg: BAD signature from.*"
+    mono body bold "^gpg: Good signature"
+    mono body bold "^gpg: BAD signature from.*"
+  '';
+
   isyncrcContent = (concatStanzas mkIsyncStores accountList) + "\n" + (concatStanzas mkIsyncChannel accountList);
   msmtpConfigContent = (lib.concatMapStrings mkMsmtpStanza accountList) + "\naccount default : ${primaryAccount.name}\n";
   notmuchConfigContent = ''
@@ -227,6 +329,10 @@ let
       set query_command = "khard email --parsable '%s'"
       macro index,pager a "<pipe-message>khard add-email<return>" "add sender to khard contacts"
     ''}
+
+    ${lib.optionalString cfg.neomutt.theme.enable (mkNeomuttTheme themeColors)}
+
+    ${optionalConfig cfg.neomutt.theme.extraConfig}
 
     ${lib.concatStringsSep "\n" (
       map (a: ''macro index,pager i${a.macroKey} '<sync-mailbox><enter-command>source ${config.xdg.configHome}/neomutt/${a.name}<enter><change-folder>!<enter>;<check-stats>' "switch to ${a.name}"'') accountList
@@ -419,6 +525,35 @@ in
         type = lib.types.bool;
         default = true;
         description = "Enable khard query and add-sender macros.";
+      };
+
+      theme = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Enable generated NeoMutt color rules.";
+        };
+
+        useStylix = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Use Stylix Base16 colors when they are available.";
+        };
+
+        colors = lib.mkOption {
+          type = lib.types.nullOr (lib.types.attrsOf lib.types.str);
+          default = null;
+          description = ''
+            Optional Base16 color attrset. Missing base00-base0F values fall
+            back to mutt-wizard-like terminal colors.
+          '';
+        };
+
+        extraConfig = lib.mkOption {
+          type = lib.types.lines;
+          default = "";
+          description = "Extra NeoMutt color config appended after the generated theme.";
+        };
       };
     };
 
