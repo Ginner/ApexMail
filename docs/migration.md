@@ -32,10 +32,10 @@
       provider = "startmail";
       folderPreset = "startmail";
       macroKey = "1";
-      address = config.sops.placeholder."work-address";
-      realname = config.sops.placeholder."work-realname";
+      address = "work-address";
+      realname = "work-realname";
       passwordCommand = "cat ${config.sops.secrets."work-password".path}";
-      extraNeomuttConfig = config.sops.placeholder."work-neomutt-extra-config";
+      extraNeomuttConfig = "work-neomutt-extra-config";
     };
   };
 }

@@ -39,12 +39,13 @@ let
 
   concatStanzas = f: xs: lib.concatStringsSep "\n" (map f xs);
   optionalConfig = value: lib.optionalString (value != null && value != "") value;
+  placeholder = key: config.sops.placeholder.${key};
 
   mkIsyncStores = a: ''
     IMAPStore ${a.name}-remote
     Host ${a.imapHost}
     Port ${toString a.imapPort}
-    User ${a.address}
+    User ${placeholder a.address}
     PassCmd "${a.passwordCommand}"
     AuthMechs LOGIN
     TLSType IMAPS
@@ -71,14 +72,14 @@ let
   mkMsmtpStanza = a: ''
     account ${a.name}
     auth on
-    from ${a.address}
+    from ${placeholder a.address}
     host ${a.smtpHost}
     passwordeval ${a.passwordCommand}
     port ${toString a.smtpPort}
     tls on
     tls_starttls off
     tls_trust_file /etc/ssl/certs/ca-certificates.crt
-    user ${a.address}
+    user ${placeholder a.address}
   '';
 
   mkNeomuttAccountFile = a: ''
@@ -91,9 +92,9 @@ let
     set sort = "threads"
     set sendmail='msmtpq --read-envelope-from --read-recipients'
     set folder='${config.xdg.dataHome}/mail/${a.name}'
-    set from='${a.address}'
+    set from='${placeholder a.address}'
     set postponed='+${a.draftsFolder}'
-    set realname='${a.realname}'
+    set realname='${placeholder a.realname}'
     set record='+${a.sentFolder}'
     set spoolfile='+INBOX'
     set trash='+${a.trashFolder}'
@@ -106,7 +107,7 @@ let
     unset signature
     set nm_default_uri = "notmuch://${config.xdg.dataHome}/mail"
     virtual-mailboxes "My INBOX" "notmuch://?query=tag%3Ainbox"
-    ${optionalConfig a.extraNeomuttConfig}
+    ${optionalConfig (lib.optionalString (a.extraNeomuttConfig != null) (placeholder a.extraNeomuttConfig))}
   '';
 
   isyncrcContent = (concatStanzas mkIsyncStores accountList) + "\n" + (concatStanzas mkIsyncChannel accountList);
@@ -116,8 +117,8 @@ let
     path=${config.xdg.dataHome}/mail
 
     [user]
-    name=${primaryAccount.realname}
-    primary_email=${primaryAccount.address}
+    name=${placeholder primaryAccount.realname}
+    primary_email=${placeholder primaryAccount.address}
 
     [new]
     tags=unread;inbox;

@@ -68,10 +68,10 @@ If the consuming repo uses sops-nix, keep all sops setup there:
     folderPreset = "startmail";
     macroKey = "1";
 
-    address = config.sops.placeholder."work-address";
-    realname = config.sops.placeholder."work-realname";
+    address = "work-address";
+    realname = "work-realname";
     passwordCommand = "cat ${config.sops.secrets."work-password".path}";
-    extraNeomuttConfig = config.sops.placeholder."work-neomutt-extra-config";
+    extraNeomuttConfig = "work-neomutt-extra-config";
   };
 }
 ```
@@ -92,7 +92,7 @@ Named mailboxes and case-specific macros should stay in the consuming private or
 
 ApexMail treats `extraNeomuttConfig` as opaque NeoMutt text. It does not assume whether the value is public text, a sops placeholder, or omitted.
 
-When using sops placeholders, set `apexMail.renderBackend = "sops"`. ApexMail will render generated files through `sops.templates`, but it still does not declare or configure any secrets itself.
+When using the sops backend, set `apexMail.renderBackend = "sops"` and pass sops key names for `address`, `realname`, and `extraNeomuttConfig`. ApexMail will render generated files through `sops.templates`, but it still does not declare or configure any secrets itself.
 
 ## Options
 
