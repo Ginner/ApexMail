@@ -43,12 +43,6 @@ let
   concatStanzas = f: xs: lib.concatStringsSep "\n" (map f xs);
   optionalConfig = value: lib.optionalString (value != null && value != "") value;
 
-  hasStylixColors =
-    config ? lib
-    && config.lib ? stylix
-    && config.lib.stylix ? colors
-    && config.lib.stylix.colors ? withHashtag;
-
   fallbackColors = {
     base00 = "default";
     base01 = "black";
@@ -68,11 +62,32 @@ let
     base0F = "red";
   };
 
+  # Stylix themes terminal ANSI colors. NeoMutt in nixpkgs does not support
+  # direct #rrggbb colors, so use terminal color indexes instead.
+  terminalColors = {
+    base00 = "color0";
+    base01 = "color0";
+    base02 = "color8";
+    base03 = "color8";
+    base04 = "color7";
+    base05 = "color7";
+    base06 = "color15";
+    base07 = "color15";
+    base08 = "color1";
+    base09 = "color3";
+    base0A = "color11";
+    base0B = "color2";
+    base0C = "color6";
+    base0D = "color4";
+    base0E = "color5";
+    base0F = "color9";
+  };
+
   themeColors =
     if cfg.neomutt.theme.colors != null then
       fallbackColors // cfg.neomutt.theme.colors
-    else if cfg.neomutt.theme.useStylix && hasStylixColors then
-      fallbackColors // config.lib.stylix.colors.withHashtag
+    else if cfg.neomutt.theme.useStylix then
+      terminalColors
     else
       fallbackColors;
 
@@ -544,8 +559,9 @@ in
           type = lib.types.nullOr (lib.types.attrsOf lib.types.str);
           default = null;
           description = ''
-            Optional Base16 color attrset. Missing base00-base0F values fall
-            back to mutt-wizard-like terminal colors.
+            Optional NeoMutt color token attrset keyed by base00-base0F. Values
+            must be NeoMutt-supported color names, such as color0 or red, not
+            #rrggbb direct colors.
           '';
         };
 
