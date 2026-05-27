@@ -93,6 +93,19 @@ ApexMail treats `extraNeomuttConfig` as opaque NeoMutt text for the XDG backend 
 
 When using the sops backend, set `apexMail.renderBackend = "sops"` and pass sops key names for `address`, `realname`, and `extraNeomuttConfig`. ApexMail will render generated files through `sops.templates`, but it still does not declare or configure any secrets itself.
 
+## Signatures
+
+Signatures often contain personal data, so keep both the signature file and the NeoMutt signature config in the consuming host repository. ApexMail disables signatures by default; override that per account through `extraNeomuttConfig`:
+
+```nix
+apexMail.accounts.work.extraNeomuttConfig = ''
+  set signature = "~/.config/mail/signature-work"
+  set sig_on_top = yes
+'';
+```
+
+For the sops backend, store those NeoMutt lines in the private sops value referenced by `extraNeomuttConfig`.
+
 ## Options
 
 Top-level namespace:
