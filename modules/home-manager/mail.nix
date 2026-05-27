@@ -1,46 +1,16 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}:
+{ config, pkgs, lib, ... }:
 
 let
   cfg = config.apexMail;
   presets = import ./presets.nix;
+  gen = import ./generators.nix { inherit config lib presets; };
+  value = x: x;
 
   enabledAccounts = lib.attrValues cfg.accounts;
-
-  resolveAccount = a:
-    let
-      base = {
-        imapHost = null;
-        imapPort = null;
-        smtpHost = null;
-        smtpPort = null;
-        archiveFolder = null;
-        draftsFolder = null;
-        sentFolder = null;
-        trashFolder = null;
-        spamFolder = null;
-      };
-      providerDefaults = presets.providers.${a.provider} or { };
-      folderDefaults = presets.folders.${a.folderPreset} or { };
-      explicitValues = lib.filterAttrs (_: value: value != null) a;
-    in
-    base // providerDefaults // folderDefaults // explicitValues // { extraNeomuttConfig = a.extraNeomuttConfig; };
-
-  accountList =
-    let
-      resolved = map resolveAccount enabledAccounts;
-      primary = lib.filter (a: a.primary) resolved;
-      others = lib.filter (a: !a.primary) resolved;
-    in
-    primary ++ (lib.sortOn (a: a.name) others);
+  accountList = gen.mkAccountList enabledAccounts;
 
   primaryAccount = lib.findFirst (a: a.primary) null accountList;
 
-  concatStanzas = f: xs: lib.concatStringsSep "\n" (map f xs);
   optionalConfig = value: lib.optionalString (value != null && value != "") value;
 
   fallbackColors = {
@@ -160,119 +130,10 @@ let
     mono body bold "^gpg: BAD signature from.*"
   '';
 
-  isyncrcContent = (concatStanzas mkIsyncStores accountList) + "\n" + (concatStanzas mkIsyncChannel accountList);
-  msmtpConfigContent = (lib.concatMapStrings mkMsmtpStanza accountList) + "\naccount default : ${primaryAccount.name}\n";
-  notmuchConfigContent = ''
-    [database]
-    path=${config.xdg.dataHome}/mail
-
-    [user]
-    name=${primaryAccount.realname}
-    primary_email=${primaryAccount.address}
-
-    [new]
-    tags=unread;inbox;
-    ignore=.mbsyncstate;.uidvalidity;
-
-    [search]
-    exclude_tags=deleted;spam;
-
-    [maildir]
-    synchronize_flags=true
-  '';
-
-  mkIsyncStores = a: ''
-    IMAPStore ${a.name}-remote
-    Host ${a.imapHost}
-    Port ${toString a.imapPort}
-    User ${a.address}
-    PassCmd "${a.passwordCommand}"
-    AuthMechs LOGIN
-    TLSType IMAPS
-    CertificateFile /etc/ssl/certs/ca-certificates.crt
-
-    MaildirStore ${a.name}-local
-    Subfolders Verbatim
-    Path ${config.xdg.dataHome}/mail/${a.name}/
-    Inbox ${config.xdg.dataHome}/mail/${a.name}/INBOX
-  '';
-
-  mkIsyncChannel = a: ''
-    Channel ${a.name}
-    Expunge Both
-    Far :${a.name}-remote:
-    Near :${a.name}-local:
-    Patterns ${lib.concatStringsSep " " a.mbsyncPatterns}
-    Create Both
-    SyncState *
-    MaxMessages 0
-    ExpireUnread no
-  '';
-
-  mkMsmtpStanza = a: ''
-    account ${a.name}
-    auth on
-    from ${a.address}
-    host ${a.smtpHost}
-    passwordeval ${a.passwordCommand}
-    port ${toString a.smtpPort}
-    tls on
-    tls_starttls off
-    tls_trust_file /etc/ssl/certs/ca-certificates.crt
-    user ${a.address}
-  '';
-
-  mkNeomuttAccountFile = a: ''
-    set ssl_force_tls = yes
-    set certificate_file=/etc/ssl/certs/ca-certificates.crt
-
-    set crypt_autosign = no
-    set crypt_opportunistic_encrypt = no
-    set pgp_use_gpg_agent = yes
-    set mbox_type = Maildir
-    set sort = "threads"
-
-    set sendmail='msmtpq --read-envelope-from --read-recipients'
-
-    set sidebar_visible = yes
-    set sidebar_short_path = yes
-    set sidebar_width = 28
-    set sidebar_format = '%D%* %?F? %F? %?N?%N/?%?S?%S?'
-
-    set folder='${config.xdg.dataHome}/mail/${a.name}'
-    set from='${a.address}'
-    set postponed='+${a.draftsFolder}'
-    set realname='${a.realname}'
-    set record='+${a.sentFolder}'
-    set spoolfile='+INBOX'
-    set trash='+${a.trashFolder}'
-
-    macro index,pager gi "<change-folder>=INBOX<enter>" "go to inbox"
-    macro index,pager Mi ";<save-message>=INBOX<enter>" "move mail to inbox"
-    macro index,pager Ci ";<copy-message>=INBOX<enter>" "copy mail to inbox"
-    macro index,pager gd "<change-folder>=${a.draftsFolder}<enter>" "go to drafts"
-    macro index,pager Md ";<save-message>=${a.draftsFolder}<enter>" "move mail to drafts"
-    macro index,pager Cd ";<copy-message>=${a.draftsFolder}<enter>" "copy mail to drafts"
-    macro index,pager gj "<change-folder>=${a.spamFolder}<enter>" "go to junk"
-    macro index,pager Mj ";<save-message>=${a.spamFolder}<enter>" "move mail to junk"
-    macro index,pager Cj ";<copy-message>=${a.spamFolder}<enter>" "copy mail to junk"
-    macro index,pager gt "<change-folder>=${a.trashFolder}<enter>" "go to trash"
-    macro index,pager Mt ";<save-message>=${a.trashFolder}<enter>" "move mail to trash"
-    macro index,pager Ct ";<copy-message>=${a.trashFolder}<enter>" "copy mail to trash"
-    macro index,pager gs "<change-folder>=${a.sentFolder}<enter>" "go to sent"
-    macro index,pager Ms ";<save-message>=${a.sentFolder}<enter>" "move mail to sent"
-    macro index,pager Cs ";<copy-message>=${a.sentFolder}<enter>" "copy mail to sent"
-    macro index,pager ga "<change-folder>=${a.archiveFolder}<enter>" "go to archive"
-    macro index,pager Ma ";<save-message>=${a.archiveFolder}<enter>" "move mail to archive"
-    macro index,pager Ca ";<copy-message>=${a.archiveFolder}<enter>" "copy mail to archive"
-
-    unset signature
-
-    set nm_default_uri = "notmuch://${config.xdg.dataHome}/mail"
-    virtual-mailboxes "My INBOX" "notmuch://?query=tag%3Ainbox"
-
-    ${optionalConfig a.extraNeomuttConfig}
-  '';
+  isyncrcContent = gen.mkIsyncrcContent value accountList;
+  msmtpConfigContent = gen.mkMsmtpConfigContent value accountList primaryAccount;
+  notmuchConfigContent = gen.mkNotmuchConfig value primaryAccount;
+  mkNeomuttAccountFile = gen.mkNeomuttAccountFile value;
 
   mkNeomuttrc = ''
     set nobeep
@@ -286,20 +147,32 @@ let
     set uncollapse_jump
     set charset = "utf-8"
     set send_charset = "utf-8:iso-8859-1:us-ascii"
+    set allow_8bit = yes
     set pager_index_lines = 15
     set pager_context = 3
     set pager_stop
     set menu_scroll
     set tilde
+    set status_chars = " "   # Mailbox status symbols, called with '%r'. 'mailbox is unchanged', 'mailbox has changed and needs to be synced', 'mailbox is read-only', 'attach message mode'
+    set to_chars = " "        # 'not adressed to your address', 'you are the only recipient', 'multiple recipient', 'you are cc', 'sent by you', 'mailing list', 'address in reply-to'
+    set crypt_chars = " "       # Encryption status symbols, 'signed and verified', 'pgp encrypted', 'signed', 'contains public key', 'no crypto info'
+    set flag_chars = " "  # 'tagged', 'important', 'flagged for deletion', 'attachment flagged for deletion', 'replied to', 'old - unread but seen', 'new mail', 'old thread', 'new tread', 'the mail is read'(%S), 'the mail is read' (%Z)
+    set status_format = "%*-  %D%r  %m messages%?n? (%n new)?%?d? (%d to delete)?%?t? (%t tagged)?  %?p?(  ---  %p postponed  )?%*-"
+    set date_format = "%Y.%m.%d %H:%M"
+    set index_format = "%3C %Z %?X?& ? %D %-20.20F %s"
+
+    # Allow showing longer attachment file-names (180)
+    set attach_format = "%u%D%I %t%4n %T%.180d%> [%.7m/%.10M, %.6e%?C?, %C?, %s] "
+
     unset markers
     set abort_key = "<Esc>"
     set mail_check_stats
     set mailcap_path = "${config.xdg.configHome}/neomutt/mailcap"
 
-    set sidebar_visible
-    set sidebar_short_path
-    set sidebar_width = 28
-    set sidebar_format = '%D%* %?F? %F? %?N?%N/?%?S?%S?'
+    set sidebar_visible = yes
+    set sidebar_short_path = yes
+    set sidebar_width = 32
+    set sidebar_format = '%D%* %?F? %F? %?N?%N/?%?S?%S?'
     set sidebar_divider_char = " | "
     set sidebar_indent_string = "  "
     set sidebar_next_new_wrap
@@ -311,9 +184,13 @@ let
     bind index,pager C noop
     bind index \Cf noop
     bind editor <space> noop
+    bind index,pager,browser d half-down
+    bind index,pager,browser u half-up
     bind index h noop
     bind index j next-entry
     bind index k previous-entry
+    bind index D delete-message
+    bind index U undelete-message
     bind attach <return> view-mailcap
     bind attach l view-mailcap
     bind pager,attach h exit
@@ -325,7 +202,19 @@ let
     bind index,query <space> tag-entry
     bind index,pager H view-raw-message
     bind browser l select-entry
+    bind browser gg top-page
+    bind browser G bottom-page
     bind index,pager S sync-mailbox
+    bind index,pager R group-reply
+    bind index,pager P recall-message
+    bind index,pager \Co sidebar-open
+    bind index,pager \Cp sidebar-prev-new
+    bind index,pager \Cn sidebar-next-new
+    bind index,pager B sidebar-toggle-visible
+    bind index \031 previous-undeleted
+    bind index \005 next-undeleted
+    bind pager \031 previous-line
+    bind pager \005 next-line
     bind pager G bottom
     bind pager gg top
     bind index gg first-entry
@@ -339,10 +228,12 @@ let
     macro attach s "<save-entry><bol>$HOME/Downloads/<eol>" "Save to Downloads folder"
     macro browser h '<change-dir><kill-line>..<enter>' "Go to parent folder"
     macro index O "<shell-escape>${cfg.neomutt.mailsyncCommand}<enter>" "run mailsync to sync all mail"
+    macro index \Cf "<enter-command>unset wait_key<enter><shell-escape>printf 'Enter a search term to find with notmuch: '; read x; echo \$x >\"\''${XDG_CACHE_HOME:-\$HOME/.cache}/mutt_terms\"<enter><limit>~i \"\`notmuch search --output=messages \$(cat \"\''${XDG_CACHE_HOME:-\$HOME/.cache}/mutt_terms\") | head -n 600 | perl -le '@a=<>;s/\^id:// for@a;$,=\"|\";print@a' | perl -le '@a=<>; chomp@a; s/\\+/\\\\+/g for@a; s/\$/\\\\\$/g for@a;print@a' \`\"<enter>" "show only messages matching a notmuch pattern"
+    macro index A "<limit>all\n" "show all messages (undo limit)"
 
     ${lib.optionalString cfg.neomutt.enableKhard ''
       set query_command = "khard email --parsable '%s'"
-      macro index,pager a "<pipe-message>khard add-email<return>" "add sender to khard contacts"
+      macro index,pager a '<enter-command>set my_pipe_decode=$pipe_decode pipe_decode<return><pipe-message>khard add-email<return><enter-command>set pipe_decode=$my_pipe_decode; unset my_pipe_decode<return>' "add sender to khard contacts"
     ''}
 
     ${lib.optionalString cfg.neomutt.theme.enable (mkNeomuttTheme themeColors)}
