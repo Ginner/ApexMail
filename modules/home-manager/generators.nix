@@ -85,7 +85,7 @@ let
     set pgp_use_gpg_agent = yes
     set mbox_type = Maildir
 
-    set sendmail='msmtpq --read-envelope-from --read-recipients'
+    set sendmail='MSMTPQ_Q="${config.xdg.stateHome}/msmtp/queue" MSMTPQ_LOG="${config.xdg.stateHome}/msmtp/queue.log" msmtpq --read-envelope-from --read-recipients'
 
     set folder='${config.xdg.dataHome}/mail/${a.name}'
     set from='${value a.address}'
