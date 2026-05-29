@@ -76,7 +76,7 @@ let
     user ${value a.address}
   '';
 
-  mkNeomuttAccountFile = value: a: ''
+  mkNeomuttAccountFile = value: sendmailCommand: a: ''
     set ssl_force_tls = yes
     set certificate_file=/etc/ssl/certs/ca-certificates.crt
 
@@ -85,7 +85,7 @@ let
     set pgp_use_gpg_agent = yes
     set mbox_type = Maildir
 
-    set sendmail='MSMTPQ_Q="${config.xdg.stateHome}/msmtp/queue" MSMTPQ_LOG="${config.xdg.stateHome}/msmtp/queue.log" msmtpq --read-envelope-from --read-recipients'
+    set sendmail='${sendmailCommand} --read-envelope-from --read-recipients'
 
     set folder='${config.xdg.dataHome}/mail/${a.name}'
     set from='${value a.address}'

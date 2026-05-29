@@ -138,7 +138,12 @@ let
   isyncrcContent = gen.mkIsyncrcContent value accountList;
   msmtpConfigContent = gen.mkMsmtpConfigContent value accountList primaryAccount;
   notmuchConfigContent = gen.mkNotmuchConfig value primaryAccount;
-  mkNeomuttAccountFile = gen.mkNeomuttAccountFile value;
+  msmtpqWrapper = pkgs.writeShellScriptBin "apexmail-msmtpq" ''
+    export MSMTPQ_Q="${config.xdg.stateHome}/msmtp/queue"
+    export MSMTPQ_LOG="${config.xdg.stateHome}/msmtp/queue.log"
+    exec ${pkgs.msmtp}/bin/msmtpq "$@"
+  '';
+  mkNeomuttAccountFile = gen.mkNeomuttAccountFile value "${msmtpqWrapper}/bin/apexmail-msmtpq";
 
   mkNeomuttrc = ''
     set nobeep
@@ -552,6 +557,7 @@ in
       ++ lib.optionals cfg.neomutt.enable (
         with pkgs;
         [
+          msmtpqWrapper
           neomutt
           gnupg
           lynx
