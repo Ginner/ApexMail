@@ -2,7 +2,6 @@
 
 ApexMail is a reusable Home Manager mail stack for `mbsync`, `msmtp`, `notmuch`, and NeoMutt.
 
-The flake is intended to be public. Do not put email addresses, real names, passwords, host names, private mailbox names, case names, client names, or other personal data in this repository.
 
 ## Usage
 
@@ -46,6 +45,8 @@ Configure accounts in the host or user-specific repository:
 ApexMail does not depend on any secrets module. `address`, `realname`, `passwordCommand`, `signatureFile`, and `extraNeomuttConfig` are plain inputs supplied by the consuming configuration. Those values may be clear text, generated values, sops placeholders, agenix paths, `pass` commands, or anything else the host repo chooses.
 
 Do not put the password itself in `passwordCommand`. Use a command that prints the password at runtime.
+
+ApexMail can also be used as a backend-only mail stack: `mbsync` syncs mail, `msmtp` sends mail, `notmuch` indexes/searches mail, and another client or script such as Emacs, aerc, or astroid consumes that setup with `apexMail.neomutt.enable = false`.
 
 ## Sops Example
 
