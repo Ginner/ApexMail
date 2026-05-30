@@ -119,6 +119,8 @@ apexMail.notmuch.enable
 apexMail.neomutt.enable
 apexMail.neomutt.mailsyncCommand
 apexMail.neomutt.enableKhard
+apexMail.neomutt.desktopEntry.enable
+apexMail.neomutt.desktopEntry.terminalCommand
 apexMail.neomutt.theme.enable
 apexMail.neomutt.theme.useStylix
 apexMail.neomutt.theme.colors
@@ -178,6 +180,23 @@ apexMail.neomutt.theme.colors = {
 ```
 
 Do not use `#rrggbb` values in `apexMail.neomutt.theme.colors` unless your NeoMutt build supports direct colors.
+
+## Desktop Entry
+
+When NeoMutt is enabled and Home Manager's XDG support is enabled, ApexMail creates an XDG desktop entry for graphical launchers such as Walker:
+
+```nix
+xdg.enable = true;
+apexMail.neomutt.desktopEntry.enable = true;
+```
+
+The entry launches NeoMutt in a terminal. The default terminal command is `kitty -e`:
+
+```nix
+apexMail.neomutt.desktopEntry.terminalCommand = "kitty -e";
+```
+
+Override this option if the consuming system uses a different terminal, for example `foot -e`, `alacritty -e`, or `wezterm start --`.
 
 ## Generated Files
 

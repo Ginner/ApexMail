@@ -474,6 +474,20 @@ in
         description = "Enable khard query and add-sender macros.";
       };
 
+      desktopEntry = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Create an XDG desktop entry for NeoMutt when xdg.enable is true.";
+        };
+
+        terminalCommand = lib.mkOption {
+          type = lib.types.str;
+          default = "kitty -e";
+          description = "Terminal command used to launch NeoMutt from graphical launchers.";
+        };
+      };
+
       theme = {
         enable = lib.mkOption {
           type = lib.types.bool;
@@ -566,6 +580,20 @@ in
           xdg-utils
         ]
       );
+
+    xdg.desktopEntries.apexmail-neomutt =
+      lib.mkIf (cfg.neomutt.enable && cfg.neomutt.desktopEntry.enable && config.xdg.enable)
+        {
+          name = "NeoMutt";
+          genericName = "Email Client";
+          exec = "${cfg.neomutt.desktopEntry.terminalCommand} ${lib.getExe pkgs.neomutt}";
+          terminal = false;
+          type = "Application";
+          categories = [
+            "Network"
+            "Email"
+          ];
+        };
 
     xdg.configFile = lib.mkMerge [
       (lib.mkIf (cfg.renderBackend == "xdg" && cfg.mbsync.enable) {
