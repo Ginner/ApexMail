@@ -486,6 +486,12 @@ in
           default = "kitty -e";
           description = "Terminal command used to launch NeoMutt from graphical launchers.";
         };
+
+        icon = lib.mkOption {
+          type = lib.types.str;
+          default = "internet-mail";
+          description = "Icon name or path used for the NeoMutt desktop entry.";
+        };
       };
 
       theme = {
@@ -587,6 +593,7 @@ in
           name = "NeoMutt";
           genericName = "Email Client";
           exec = "${cfg.neomutt.desktopEntry.terminalCommand} ${lib.getExe pkgs.neomutt}";
+          icon = cfg.neomutt.desktopEntry.icon;
           terminal = false;
           type = "Application";
           categories = [

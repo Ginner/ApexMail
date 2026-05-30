@@ -122,6 +122,7 @@ apexMail.neomutt.mailsyncCommand
 apexMail.neomutt.enableKhard
 apexMail.neomutt.desktopEntry.enable
 apexMail.neomutt.desktopEntry.terminalCommand
+apexMail.neomutt.desktopEntry.icon
 apexMail.neomutt.theme.enable
 apexMail.neomutt.theme.useStylix
 apexMail.neomutt.theme.colors
@@ -198,6 +199,12 @@ apexMail.neomutt.desktopEntry.terminalCommand = "kitty -e";
 ```
 
 Override this option if the consuming system uses a different terminal, for example `foot -e`, `alacritty -e`, or `wezterm start --`.
+
+The desktop entry uses the themed icon name `internet-mail` by default. Override it with another icon name or an icon file path:
+
+```nix
+apexMail.neomutt.desktopEntry.icon = "mail-client";
+```
 
 ## Generated Files
 
