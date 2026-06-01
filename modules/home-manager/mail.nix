@@ -158,7 +158,7 @@ let
     set fcc_attach            # Save attachments with the body
     set fast_reply            # Skip to compose when replying
     set include
-    set mime_foward = yes     # Forward attachments with replies
+    set mime_forward = yes     # Forward attachments with replies
     set forward_format = "Fwd: %s"
     set forward_quote
     set use_threads = threads
