@@ -150,10 +150,17 @@ let
     set allow_ansi
     set mbox_type = Maildir
     set folder = "${config.xdg.dataHome}/mail"
+    set sleep_time =0
     set sort = reverse-last-date
     set sort_aux = reverse-last-date
     set sort_re
     set wait_key = no
+    set fcc_attach            # Save attachments with the body
+    set fast_reply            # Skip to compose when replying
+    set include
+    set mime_foward = yes     # Forward attachments with replies
+    set forward_format = "Fwd: %s"
+    set forward_quote
     set use_threads = threads
     set uncollapse_jump
     set charset = "utf-8"

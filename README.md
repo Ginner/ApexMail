@@ -220,3 +220,7 @@ ApexMail writes these files:
 ```
 
 NeoMutt is configured through XDG files directly. No wrapper is installed; plain `neomutt` is expected to discover `~/.config/neomutt/neomuttrc`.
+
+## Configuration
+`mail.nix` generates the main NeoMutt configuration file (at `$XDG_CONFIG_HOME/neomutt/neomuttrc`).
+`generators.nix` generates per-account configuration files (at `$XDG_CONFIG_HOME/neomutt/<account-name>`).
