@@ -138,11 +138,10 @@ let
   isyncrcContent = gen.mkIsyncrcContent value accountList;
   msmtpConfigContent = gen.mkMsmtpConfigContent value accountList primaryAccount;
   notmuchConfigContent = gen.mkNotmuchConfig value primaryAccount;
-  msmtpqWrapper = pkgs.writeShellScriptBin "apexmail-msmtpq" ''
-    export MSMTPQ_Q="${config.xdg.stateHome}/msmtp/queue"
-    export MSMTPQ_LOG="${config.xdg.stateHome}/msmtp/queue.log"
-    exec ${pkgs.msmtp}/bin/msmtpq "$@"
-  '';
+  msmtpqWrapper = import ./msmtpq.nix {
+    inherit pkgs;
+    stateHome = config.xdg.stateHome;
+  };
   mkNeomuttAccountFile = gen.mkNeomuttAccountFile value "${msmtpqWrapper}/bin/apexmail-msmtpq";
 
   mkNeomuttrc = ''

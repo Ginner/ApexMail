@@ -13,11 +13,10 @@ let
 
   accountList = gen.mkAccountList (lib.attrValues cfg.accounts);
   primaryAccount = lib.findFirst (a: a.primary) null accountList;
-  msmtpqWrapper = pkgs.writeShellScriptBin "apexmail-msmtpq" ''
-    export MSMTPQ_Q="${config.xdg.stateHome}/msmtp/queue"
-    export MSMTPQ_LOG="${config.xdg.stateHome}/msmtp/queue.log"
-    exec ${pkgs.msmtp}/bin/msmtpq "$@"
-  '';
+  msmtpqWrapper = import ./msmtpq.nix {
+    inherit pkgs;
+    stateHome = config.xdg.stateHome;
+  };
 in
 {
   imports = [ ./default.nix ];
