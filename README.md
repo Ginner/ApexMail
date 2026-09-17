@@ -200,7 +200,11 @@ apexMail.neomutt.desktopEntry.terminalCommand = "kitty -e";
 
 Override this option if the consuming system uses a different terminal, for example `foot -e`, `alacritty -e`, or `wezterm start --`.
 
-The desktop entry uses the themed icon name `internet-mail` by default. Override it with another icon name or an icon file path:
+The desktop entry uses a standalone copy of the Mutt icon from
+`pkgs.tela-icon-theme` by default. ApexMail supplies an absolute icon path, so
+the icon works even without a desktop icon theme. Only the copied SVG is kept
+as a runtime dependency; ApexMail does not install or select the full theme.
+Override it with a themed icon name or an icon file path:
 
 ```nix
 apexMail.neomutt.desktopEntry.icon = "mail-client";

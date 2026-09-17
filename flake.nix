@@ -33,6 +33,8 @@
                 stateVersion = "25.11";
               };
 
+              xdg.enable = true;
+
               apexMail = {
                 enable = true;
                 accounts.example = {

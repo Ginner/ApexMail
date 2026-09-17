@@ -11,6 +11,11 @@ let
   gen = import ./generators.nix { inherit config lib presets; };
   value = x: x;
 
+  # Copy only the icon, so the desktop entry doesn't retain the whole theme.
+  neomuttIcon = pkgs.runCommand "apexmail-neomutt.svg" { } ''
+    cp ${pkgs.tela-icon-theme}/share/icons/Tela/scalable/apps/mutt.svg "$out"
+  '';
+
   enabledAccounts = lib.attrValues cfg.accounts;
   accountList = gen.mkAccountList enabledAccounts;
 
@@ -496,8 +501,8 @@ in
 
         icon = lib.mkOption {
           type = lib.types.str;
-          default = "internet-mail";
-          description = "Icon name or path used for the NeoMutt desktop entry.";
+          default = "${neomuttIcon}";
+          description = "Icon name or path used for the NeoMutt desktop entry. Defaults to a standalone copy of Tela's Mutt icon.";
         };
       };
 
