@@ -56,7 +56,15 @@ let
     Expunge Both
     Far :${a.name}-remote:
     Near :${a.name}-local:
-    Patterns ${lib.concatStringsSep " " a.mbsyncPatterns}
+    Patterns ${
+      lib.concatStringsSep " " (
+        a.mbsyncPatterns
+        ++ lib.concatMap (name: [
+          "!${name}"
+          "!${name}/*"
+        ]) a.placeholderMailboxes
+      )
+    }
     Create Both
     SyncState *
     MaxMessages 0

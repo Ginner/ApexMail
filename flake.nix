@@ -12,7 +12,12 @@
   };
 
   outputs =
-    { self, nixpkgs, home-manager, ... }:
+    {
+      self,
+      nixpkgs,
+      home-manager,
+      ...
+    }:
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
@@ -22,34 +27,39 @@
       homeManagerModules.sops = ./modules/home-manager/sops.nix;
 
       checks.${system} = {
-        example = (home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          modules = [
-            self.homeManagerModules.default
-            {
-              home = {
-                username = "apexmail-check";
-                homeDirectory = "/home/apexmail-check";
-                stateVersion = "25.11";
-              };
-
-              xdg.enable = true;
-
-              apexMail = {
-                enable = true;
-                accounts.example = {
-                  primary = true;
-                  provider = "startmail";
-                  folderPreset = "startmail";
-                  macroKey = "1";
-                  address = "example@example.invalid";
-                  realname = "Example User";
-                  passwordCommand = "cat /run/secrets/example-mail-password";
+        example =
+          (home-manager.lib.homeManagerConfiguration {
+            inherit pkgs;
+            modules = [
+              self.homeManagerModules.default
+              {
+                home = {
+                  username = "apexmail-check";
+                  homeDirectory = "/home/apexmail-check";
+                  stateVersion = "25.11";
                 };
-              };
-            }
-          ];
-        }).activationPackage;
+
+                xdg.enable = true;
+
+                apexMail = {
+                  enable = true;
+                  accounts.example = {
+                    primary = true;
+                    provider = "startmail";
+                    folderPreset = "startmail";
+                    macroKey = "1";
+                    address = "example@example.invalid";
+                    realname = "Example User";
+                    passwordCommand = "cat /run/secrets/example-mail-password";
+                    placeholderMailboxes = [ "sidebar-heading" ];
+                    extraNeomuttConfig = ''
+                      named-mailboxes -nopoll -nonotify "--- Folders ---" "=sidebar-heading"
+                    '';
+                  };
+                };
+              }
+            ];
+          }).activationPackage;
         msmtpq = import ./tests/msmtpq.nix { inherit pkgs; };
       };
     };

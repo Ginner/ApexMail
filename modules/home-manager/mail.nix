@@ -345,6 +345,21 @@ let
           description = "mbsync channel Patterns entries.";
         };
 
+        placeholderMailboxes = lib.mkOption {
+          type = lib.types.listOf (lib.types.strMatching "[A-Za-z0-9_-][A-Za-z0-9_.-]*");
+          default = [ ];
+          example = [
+            "sidebar-heading"
+            "sidebar-spacer"
+          ];
+          description = ''
+            Local-only, top-level Maildirs used as NeoMutt sidebar placeholders.
+            Created at Home Manager activation and excluded, along with their
+            subfolders, from mbsync. Reference them in extraNeomuttConfig with
+            named-mailboxes; names must not overlap real mailboxes.
+          '';
+        };
+
         archiveFolder = lib.mkOption {
           type = lib.types.nullOr lib.types.str;
           default = null;
@@ -581,6 +596,25 @@ in
         assertion = hasFolderConfig a;
         message = "apexMail.accounts.${a.name}: folder settings are incomplete.";
       }) accountList;
+
+    home.activation.apexmailPlaceholderMailboxes = lib.mkIf cfg.neomutt.enable (
+      lib.hm.dag.entryAfter [ "writeBoundary" ] (
+        lib.concatMapStringsSep "\n" (
+          a:
+          lib.concatMapStringsSep "\n" (
+            name:
+            "run ${pkgs.coreutils}/bin/mkdir -p -- "
+            + lib.escapeShellArgs (
+              map (part: "${config.xdg.dataHome}/mail/${a.name}/${name}/${part}") [
+                "cur"
+                "new"
+                "tmp"
+              ]
+            )
+          ) a.placeholderMailboxes
+        ) accountList
+      )
+    );
 
     home.packages =
       lib.optionals cfg.mbsync.enable [ pkgs.isync ]
