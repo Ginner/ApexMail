@@ -353,8 +353,9 @@ let
             "sidebar-spacer"
           ];
           description = ''
-            Local-only, top-level Maildirs used as NeoMutt sidebar placeholders.
-            Created at Home Manager activation and excluded, along with their
+            Local-only, top-level NeoMutt sidebar placeholders. Home Manager
+            activation creates missing placeholders as empty regular files and
+            preserves existing files and directories. Excluded, along with their
             subfolders, from mbsync. Reference them in extraNeomuttConfig with
             named-mailboxes; names must not overlap real mailboxes.
           '';
@@ -603,14 +604,16 @@ in
           a:
           lib.concatMapStringsSep "\n" (
             name:
-            "run ${pkgs.coreutils}/bin/mkdir -p -- "
-            + lib.escapeShellArgs (
-              map (part: "${config.xdg.dataHome}/mail/${a.name}/${name}/${part}") [
-                "cur"
-                "new"
-                "tmp"
-              ]
-            )
+            let
+              parent = "${config.xdg.dataHome}/mail/${a.name}";
+              path = lib.escapeShellArg "${parent}/${name}";
+            in
+            ''
+              if [[ ! -e ${path} && ! -L ${path} ]]; then
+                run ${pkgs.coreutils}/bin/mkdir -p -- ${lib.escapeShellArg parent}
+                run ${pkgs.coreutils}/bin/touch -- ${path}
+              fi
+            ''
           ) a.placeholderMailboxes
         ) accountList
       )

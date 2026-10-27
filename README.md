@@ -107,12 +107,15 @@ Then reference the placeholder in the account's `extraNeomuttConfig` snippet:
 named-mailboxes -nopoll -nonotify "--- Folders ---" "=sidebar-heading"
 ```
 
-Home Manager activation creates the placeholder's `cur`, `new`, and `tmp`
-directories under the account's local mail directory. ApexMail appends mbsync
-exclusions for each placeholder and its subfolders so it is not uploaded to
-the server. This works with both render backends; the snippet remains owned
-by the consuming configuration. Names must be simple top-level names and must
-not overlap real mailboxes. Removing a declaration does not delete local data.
+Home Manager activation creates missing placeholders as empty regular files
+under the account's local mail directory. Existing files are left untouched,
+including their contents and timestamps. Existing Maildir placeholders are
+also preserved and continue to work; no migration is required on other hosts.
+ApexMail appends mbsync exclusions for each placeholder and its subfolders so
+it is not uploaded to the server. This works with both render backends; the
+snippet remains owned by the consuming configuration. Names must be simple
+top-level names and must not overlap real mailboxes. Removing a declaration
+does not delete local data.
 
 When using the sops backend, set `apexMail.renderBackend = "sops"` and pass sops key names for `address`, `realname`, and `extraNeomuttConfig`. ApexMail will render generated files through `sops.templates`, but it still does not declare or configure any secrets itself.
 
